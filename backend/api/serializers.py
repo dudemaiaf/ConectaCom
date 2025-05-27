@@ -6,7 +6,7 @@ class ComunidadeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.Comunidade
-        fields = ['id', 'titulo', 'descricao', 'participando']
+        fields = '__all__'
 
     def get_participando(self, obj):
         user = self.context['request'].user
@@ -16,8 +16,8 @@ class EventoSerializer(serializers.ModelSerializer):
     participando = serializers.SerializerMethodField()
 
     class Meta:
-        model = models.Comunidade
-        fields = ['id', 'titulo', 'descricao', 'participando']
+        model = models.Evento
+        fields = '__all__'
 
     def get_participando(self, obj):
         user = self.context['request'].user
@@ -27,3 +27,4 @@ class PostagemSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Postagem
         fields = '__all__'
+

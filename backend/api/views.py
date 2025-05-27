@@ -18,7 +18,7 @@ class ComunidadeView(viewsets.ModelViewSet):
         return context
 
     @action(detail=True, methods=['post'])
-    def participar(self, request, pk=None):
+    def participar_comunidade(self, request, pk=None):
         comunidade = self.get_object()
         comunidade.participantes.add(request.user)
         return Response({'detail': 'Você agora participa da comunidade.'}, status=status.HTTP_200_OK)
@@ -38,7 +38,33 @@ class EventoView(viewsets.ModelViewSet):
     # permission_classes = [permissions.IsAuthenticated]
     serializer_class = serializers.EventoSerializer
     queryset = models.Evento.objects.filter(ativo=True)
-    # def get_queryset(self):
+    def get_serializer_context(self):
+        # Inclui o request no contexto do serializer para acessar o usuário
+        context = super().get_serializer_context()
+        context.update({'request': self.request})
+        return context
+
+    @action(detail=True, methods=['post'])
+    def inscrever_evento(self, request, pk=None):
+        evento = self.get_object()
+        evento.participantes.add(request.user)
+        return Response({'detail': 'Inscrição realizada.'}, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=['post'])
+    def sair_evento(self, request, pk=None):
+        evento = self.get_object()
+        evento.participantes.remove(request.user)
+        return Response({'detail': 'Inscrição cancelada.'}, status=status.HTTP_200_OK)
+    
+    @action(detail=True, methods=['post'])
+    def avaliar_evento(self, request, pk=None):
+        evento = self.get_object()
+        if (request.data.get('avaliar') == True):
+            evento.react_positivo += 1
+        else:
+            evento.react_negativo += 1
+        evento.save()
+        return Response({'detail': 'Avaliação realizada.'}, status=status.HTTP_200_OK)
 
     #     return queryset
     def destroy(self, request, *args, **kwargs):
@@ -47,17 +73,25 @@ class EventoView(viewsets.ModelViewSet):
         return Response({"message": "Evento desativado"}, status=status.HTTP_204_NO_CONTENT)
 
 class PostagemView(viewsets.ModelViewSet):
-    # permission_classes = [permissions.IsAuthenticated]
     serializer_class = serializers.PostagemSerializer
-    # queryset = models.Evento.objects.filter(ativo=True)
-    # def get_queryset(self):
-    #     # p_usuario = self.request.query_params.get('servidor', None)
-    #     p_comunidade = self.request.query_params.get('comunidade', None)
-    #     if (p_comunidade):
     queryset = models.Postagem.objects.filter(ativo=True)
-    #     else:
-    #         queryset = models.Postagem.objects.filter(ativo=True)
-    #     return queryset
+
+    def get_serializer_context(self):
+        # Inclui o request no contexto do serializer para acessar o usuário
+        context = super().get_serializer_context()
+        context.update({'request': self.request})
+        return context
+    
+    @action(detail=True, methods=['post'])
+    def avaliar_postagem(self, request, pk=None):
+        postagem = self.get_object()
+        if (request.data.get('avaliar') == True):
+            postagem.react_positivo += 1
+        else:
+            postagem.react_negativo += 1
+        postagem.save()
+        return Response({'detail': 'Avaliação realizada.'}, status=status.HTTP_200_OK)
+    
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         instance.delete()
