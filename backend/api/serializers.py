@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from . import models
+from django.contrib.auth.models import User
 
 class ComunidadeSerializer(serializers.ModelSerializer):
     participando = serializers.SerializerMethodField()
@@ -48,4 +49,17 @@ class PostagemSerializer(serializers.ModelSerializer):
         reacao = obj.reacoes.filter(usuario=user).first()
         return reacao.tipo if reacao else None
 
+class CadastroSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True, required=True, style={'input_type': 'password'})
 
+    class Meta:
+        model = User
+        fields = ('username', 'email', 'password')
+
+    def create(self, validated_data):
+        user = User.objects.create_user(
+            username=validated_data['username'],
+            email=validated_data.get('email'),
+            password=validated_data['password']
+        )
+        return user

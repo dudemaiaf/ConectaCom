@@ -1,10 +1,16 @@
 from rest_framework import viewsets, permissions, status
 from rest_framework.response import Response
-from rest_framework.views import APIView
+from rest_framework import generics
 from rest_framework.decorators import action
 from datetime import datetime, date, timedelta
+from django.contrib.auth.models import User
 from . import models
 from . import serializers
+
+class CadastroView(generics.CreateAPIView):
+    queryset = User.objects.all()
+    serializer_class = serializers.CadastroSerializer
+    permission_classes = [permissions.AllowAny]
 
 class ComunidadeView(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
