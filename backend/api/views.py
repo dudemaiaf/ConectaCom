@@ -7,7 +7,7 @@ from . import models
 from . import serializers
 
 class ComunidadeView(viewsets.ModelViewSet):
-    # permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated]
     serializer_class = serializers.ComunidadeSerializer
     queryset = models.Comunidade.objects.filter(ativo=True)
 
@@ -35,7 +35,7 @@ class ComunidadeView(viewsets.ModelViewSet):
         return Response({"message": "Comunidade desativada"}, status=status.HTTP_204_NO_CONTENT)
     
 class EventoView(viewsets.ModelViewSet):
-    # permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated]
     serializer_class = serializers.EventoSerializer
     queryset = models.Evento.objects.filter(ativo=True)
     def get_serializer_context(self):
@@ -73,6 +73,7 @@ class EventoView(viewsets.ModelViewSet):
         return Response({"message": "Evento desativado"}, status=status.HTTP_204_NO_CONTENT)
 
 class PostagemView(viewsets.ModelViewSet):
+    permission_classes = [permissions.IsAuthenticated]
     serializer_class = serializers.PostagemSerializer
     queryset = models.Postagem.objects.filter(ativo=True)
 
@@ -82,15 +83,46 @@ class PostagemView(viewsets.ModelViewSet):
         context.update({'request': self.request})
         return context
     
+    def perform_create(self, serializer):
+        serializer.save(autor=self.request.user)
+    
     @action(detail=True, methods=['post'])
-    def avaliar_postagem(self, request, pk=None):
+    def curtir(self, request, pk=None):
         postagem = self.get_object()
-        if (request.data.get('avaliar') == True):
-            postagem.react_positivo += 1
-        else:
-            postagem.react_negativo += 1
-        postagem.save()
-        return Response({'detail': 'Avaliação realizada.'}, status=status.HTTP_200_OK)
+        usuario = request.user
+
+        reacao, created = models.PostagemReacao.objects.get_or_create(
+            usuario=usuario, postagem=postagem,
+            defaults={'tipo': 'positivo'}
+        )
+
+        if not created:
+            if reacao.tipo == 'positivo':
+                return Response({'detail': 'Você já curtiu esta postagem.'}, status=400)
+            else:
+                reacao.tipo = 'positivo'
+                reacao.save()
+
+        return Response({'detail': 'Postagem curtida com sucesso.'})
+
+    @action(detail=True, methods=['post'])
+    def descurtir(self, request, pk=None):
+        postagem = self.get_object()
+        usuario = request.user
+
+        reacao, created = models.PostagemReacao.objects.get_or_create(
+            usuario=usuario, postagem=postagem,
+            defaults={'tipo': 'negativo'}
+        )
+
+        if not created:
+            if reacao.tipo == 'negativo':
+                return Response({'detail': 'Você já descurtiu esta postagem.'}, status=400)
+            else:
+                reacao.tipo = 'negativo'
+                reacao.save()
+
+        return Response({'detail': 'Postagem descurtida com sucesso.'})
     
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()

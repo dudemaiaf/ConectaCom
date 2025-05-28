@@ -24,7 +24,28 @@ class EventoSerializer(serializers.ModelSerializer):
         return user in obj.participantes.all()
 
 class PostagemSerializer(serializers.ModelSerializer):
+    autor = serializers.ReadOnlyField(source='autor.username')
+    curtidas = serializers.SerializerMethodField()
+    descurtidas = serializers.SerializerMethodField()
+    minha_reacao = serializers.SerializerMethodField()
     class Meta:
         model = models.Postagem
-        fields = '__all__'
+        fields = [
+            'id', 'texto', 'autor', 'comunidade', 'curtidas', 'descurtidas', 'minha_reacao',
+            'create_at'
+        ]
+
+    def get_curtidas(self, obj):
+        return obj.reacoes.filter(tipo='positivo').count()
+
+    def get_descurtidas(self, obj):
+        return obj.reacoes.filter(tipo='negativo').count()
+
+    def get_minha_reacao(self, obj):
+        user = self.context['request'].user
+        if not user.is_authenticated:
+            return None
+        reacao = obj.reacoes.filter(usuario=user).first()
+        return reacao.tipo if reacao else None
+
 

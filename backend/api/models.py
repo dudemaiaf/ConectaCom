@@ -1,6 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
-   
+
 class Comunidade(models.Model):
     titulo = models.CharField(max_length=200, null=False, blank=True)
     descricao = models.CharField(max_length=200, null=False, blank=True)
@@ -44,8 +44,25 @@ class Postagem(models.Model):
     create_at = models.DateTimeField(auto_now_add=True, null=True)
 
     def __str__(self):
-        return self.autor + " - " + self.texto
+        return f"{self.autor.username} - {self.texto}"
     
     def delete(self, *args, **kwargs):
         self.ativo = False
         self.save()
+
+class PostagemReacao(models.Model):
+    REACAO_CHOICES = (
+        ('positivo', 'Positivo'),
+        ('negativo', 'Negativo'),
+    )
+
+    usuario = models.ForeignKey(User, on_delete=models.CASCADE)
+    postagem = models.ForeignKey(Postagem, on_delete=models.CASCADE, related_name='reacoes')
+    tipo = models.CharField(max_length=10, choices=REACAO_CHOICES)
+    criado_em = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('usuario', 'postagem')  # só 1 reação por usuário por postagem
+
+    def __str__(self):
+        return f'{self.usuario.username} - {self.tipo} em "{self.postagem.texto[:30]}"'
