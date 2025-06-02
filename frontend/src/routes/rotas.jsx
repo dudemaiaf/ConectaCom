@@ -30,7 +30,7 @@ export default [
         path="/"
         element={
             <PrivateRoute>
-                <Feed/>
+                <Home/>
             </PrivateRoute>
         }
     />
