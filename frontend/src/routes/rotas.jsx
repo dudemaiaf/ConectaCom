@@ -5,12 +5,18 @@ import Home from '../views/Home';
 import Feed from '../views/Feed';
 
 const PrivateRoute = ({ children }) => {
-    const { user } = useAuth();
-    return user ? children : <Navigate to="/login" />;
+    const { autenticado } = useAuth();
+    if (autenticado()){
+        return children
+    }
+    <Navigate to="/login" replace />;
+    // const { user } = useAuth();
+    // return user ? children : <Navigate to="/login" />;
 }
 
 export default [
     <Route
+        key="rota-1"
         path="/login"
         element={
             <PrivateRoute>
@@ -27,6 +33,7 @@ export default [
     //     } 
     // />,
     <Route
+        key="rota-2"
         path="/"
         element={
             <PrivateRoute>

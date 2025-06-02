@@ -6,7 +6,6 @@ export const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
 
-  // opcional: decodifica token para pegar username
   useEffect(() => {
     const token = localStorage.getItem('access');
     if (token) {
@@ -14,16 +13,28 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
+  const getToken = () =>{
+    return sessionStorage.getItem("access");
+  };
+
+  var autenticado = () => {
+    if(sessionStorage.getItem("access")){
+        return true
+    }else{
+        return false
+    }
+  };
+
   const login = async (username, password) => {
     const response = await api.post('/auth/login/', { username, password });
-    localStorage.setItem('access', response.data.access);
-    localStorage.setItem('refresh', response.data.refresh);
+    sessionStorage.setItem('access', response.data.access);
+    sessionStorage.setItem('refresh', response.data.refresh);
     setUser({ token: response.data.access });
   };
 
   const logout = () => {
-    localStorage.removeItem('access');
-    localStorage.removeItem('refresh');
+    sessionStorage.removeItem('access');
+    sessionStorage.removeItem('refresh');
     setUser(null);
   };
 
@@ -32,7 +43,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, register }}>
+    <AuthContext.Provider value={{ user, login, logout, register, getToken, autenticado }}>
       {children}
     </AuthContext.Provider>
   );

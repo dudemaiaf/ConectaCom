@@ -4,6 +4,7 @@ import { Dialog } from 'primereact/dialog';
 import { InputText } from 'primereact/inputtext';
 import { InputTextarea } from 'primereact/inputtextarea';
 import { Button } from 'primereact/button';
+import { Checkbox } from 'primereact/checkbox';
 import api from '../api/api';
 
 export default function Comunidades() {
@@ -13,10 +14,22 @@ export default function Comunidades() {
   const [titulo, setTitulo] = useState('');
   const [descricao, setDescricao] = useState('');
 
+  const [somenteMinhas, setSomenteMinhas] = useState(false);
+
   const fetchComunidades = async () => {
     api.get('/api/comunidade/')
       .then(res => setComunidades(res.data))
       .catch(console.error);
+  };
+
+  const participarComunidade = async (id) => {
+    await api.post(`/api/comunidade/${id}/participar_comunidade/`);
+    fetchComunidades();
+  };
+  
+  const sairComunidade = async (id) => {
+    await api.post(`/api/comunidade/${id}/sair_comunidade/`);
+    fetchComunidades();
   };
 
   useEffect(() => {
@@ -35,14 +48,19 @@ export default function Comunidades() {
     fetchComunidades();
   };
 
-  const comunidadesFiltradas = comunidades.filter(c =>
-    c.titulo.toLowerCase().includes(filtro.toLowerCase()) ||
-    c.descricao?.toLowerCase().includes(filtro.toLowerCase())
-  );
+  const comunidadesFiltradas = comunidades.filter(c => {
+    const matchTexto =
+      c.titulo.toLowerCase().includes(filtro.toLowerCase()) ||
+      c.descricao?.toLowerCase().includes(filtro.toLowerCase());
+
+    const matchParticipando = !somenteMinhas || c.participando;
+
+    return matchTexto && matchParticipando;
+  });
 
   return (
     <div className="grid gap-4">
-            <Button label="Nova Comunidade" icon="pi pi-plus" onClick={() => setDialogVisible(true)} />
+      <Button label="Nova Comunidade" icon="pi pi-plus" onClick={() => setDialogVisible(true)} />
 
       <Dialog
         header="Criar Comunidade"
@@ -83,9 +101,36 @@ export default function Comunidades() {
         </span>
       </div>
 
+      <div className="flex align-items-center gap-3">
+        <Checkbox
+          inputId="minhas-comunidades"
+          checked={somenteMinhas}
+          onChange={e => setSomenteMinhas(e.checked)}
+        />
+        <label htmlFor="minhas-comunidades">Mostrar apenas minhas comunidades</label>
+      </div>
+
       {comunidadesFiltradas.map(c => (
         <Card key={c.id} title={c.titulo}>
           <p>{c.descricao}</p>
+          <div className="flex gap-2 mt-2">
+            <span>{c.participantes.length} membros</span>
+            {c.participando ? (
+              <Button
+                label="Sair"
+                icon="pi pi-user-minus"
+                severity="danger"
+                onClick={() => sairComunidade(c.id)}
+              />
+            ) : (
+              <Button
+                label="Participar"
+                icon="pi pi-user-plus"
+                severity="success"
+                onClick={() => participarComunidade(c.id)}
+              />
+            )}
+          </div>
         </Card>
       ))}
     </div>

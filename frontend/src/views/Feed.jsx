@@ -78,7 +78,7 @@ export default function Feed() {
             className="w-full"
             value={comunidadeId}
             options={comunidades}
-            optionLabel="nome"
+            optionLabel="titulo"
             optionValue="id"
             placeholder="Comunidade (opcional)"
             onChange={e => setComunidadeId(e.value)}
